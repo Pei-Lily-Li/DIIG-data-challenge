@@ -18,3 +18,16 @@ library(knitr)
 library(broom)
 IBM <- read_csv("data.csv")
 ```
+
+### Guiding Questions
+
+What factors contribute to employee satisfaction levels and what can IBM do to improve satisfaction? Do certain roles have greater employee churn? If so, what factors lead to this churn?
+
+### Questions
+
+* How much would be appropriate for us to branch out from the guiding questions?
+  + Since branching out will lead to less focus on the proposed questions.
+* How should we define "employee churn"?
+  + Churn: The churn rate is usually calculated as the percentage of employees leaving the company over some specified time period.
+   - Do we get to define this "period"?
+   - Should we just look which role tend to have shorter **YearsAtCurrentRole**?
