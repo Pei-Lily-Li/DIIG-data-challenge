@@ -31,3 +31,33 @@ What factors contribute to employee satisfaction levels and what can IBM do to i
   + Churn: The churn rate is usually calculated as the percentage of employees leaving the company over some specified time period.
    - Do we get to define this "period"?
    - Should we just look which role tend to have shorter **YearsAtCurrentRole**?
+   
+   
+Do some background info, IBM/working conditions, shows understanding
+Come up with new questions
+As a client, what do you think IMB would be interested in knowing
+
+
+Formatting question:
+would you suggest we knit it into a pdf or a webpage? When we submit the rmd file can it be a pdf so it's easier to look at?
+
+You want to push yourself, explore
+
+treat the presentation like you are presenting to business people
+Should explain R^2 we should explain it in the context
+Ability to give actionable suggestions
+Don't just do stats presentations
+
+Questions should be business-related
+
+about 10min presentation
+
+basically we can ask anything that might be helpful to the employer, you would recommend that...
+What should 
+what role would you apply for if you want to have higher wage. 
+Design who do you want to answer the question to.
+
+Far more important to have great visualizations.
+
+Mostly R and Tableau.
+
