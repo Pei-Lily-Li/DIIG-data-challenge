@@ -10,28 +10,156 @@ knitr::opts_chunk$set(echo  =  TRUE,
                       message = FALSE)
 ```
 
-### Load packages & data
+## Load packages & data
 
 ```{r load-packages, message = FALSE}
 library(tidyverse)
 library(knitr)
 library(broom)
+library(ggplot2)
+library(hrbrthemes)
+library(dplyr)
+library(tidyr)
+library(viridis)
 IBM <- read_csv("data.csv")
 ```
 
-### Guiding Questions
+## Guiding Questions
 
 What factors contribute to employee satisfaction levels and what can IBM do to improve satisfaction? Do certain roles have greater employee churn? If so, what factors lead to this churn?
 
+#### Look at relationship between total working years and years at company and their subtraction
+
+#### Look at relationship between JobInvolvement & Salary/Performance Rating
+
+JobInvolvement & Salary: if people who are involved the most fairly rewarded?
+
+#### YearsAtCurrentRole vs. TotalYearsAtCompany
+
+See if employees are flexible between roles
+If not, then might increase flexibility
+If flexible, then maybe think about limiting role switch if want employees to gain expertise in one certain area.
+This might answer the question of "How do you help people learn new things?"
+
+#### Word Cloud
+
+```{r}
+library(wordcloud2)
+wordcloud <- IBM %>%
+  select(JobRole) %>%
+  count(JobRole)
+
+graph <- letterCloud(wordcloud, word = "IBM", color="black", backgroundColor="pink")
+graph
+```
+
+#### Let's start with some basic demographic info
+
+```{r}
+```
+
+#### Relationship Between Length at IBM & Work-life Balance
+
+```{r}
+yearsVedu <- IBM %>%
+  mutate(College = case_when(
+    Education == 1 ~ "Below College",
+    Education == 2 ~ "College",
+    Education == 3 ~ "Bachelor",
+    Education == 4 ~ "Master",
+    Education == 4 ~ "Doctor"
+  ), !is.na(Education)) %>%
+  select(College, YearsAtCompany)
+
+ggplot(data=yearsVedu, aes(x=YearsAtCompany, group=College, fill=College)) +
+  geom_density(adjust=1.5, alpha=.4) +
+  theme_ipsum()
+
+ggplot(data=IBM, aes(x=YearsAtCompany, group=Gender, fill=Gender)) +
+  geom_density(adjust=1.5, alpha=.4) +
+  theme_ipsum()
+```
+
+#### Emloyee Churn
+
+```{r}
+churn <- IBM %>%
+  group_by(JobRole) %>% 
+  summarize(AverageWorkYear = mean(YearsAtCompany))
+churn
+
+ggplot(churn, aes(x = JobRole, y = AverageWorkYear, fill = JobRole)) + 
+  geom_bar(stat = "identity") +
+  scale_fill_hue(c = 40) +
+  theme(legend.position="none") +
+  coord_flip()
+```
+
+#### Satisfaction
+
+```{r}
+satisfaction <- IBM %>%
+  select(JobRole, JobSatisfaction) %>%
+  arrange(JobSatisfaction) %>%
+  mutate(Satisfaction = case_when(
+    JobSatisfaction == 1 ~ "Low",
+    JobSatisfaction == 2 ~ "Medium",
+    JobSatisfaction == 3 ~ "High",
+    JobSatisfaction == 4 ~ "Very High"
+  ))
+
+# Question: how to order this?
+ggplot(satisfaction, aes(x = JobRole, fill = Satisfaction)) +
+  geom_bar(position="fill", stat="count") +
+  coord_flip()
+```
+
+Suggestion: mostly high job satisfaction in all roles -- 
+
+#### Diversity & Inclusion
+
+```{r}
+gender <- IBM %>%
+  select(Department, Gender)
+
+role <- IBM %>%
+  select(JobRole, Gender)
+
+salary <- IBM %>%
+  select(Gender, MonthlyIncome) %>%
+  group_by(Gender) %>%
+  summarize(avg_salary = mean(MonthlyIncome))
+salary
+
+marital <- IBM %>%
+  select(MaritalStatus, MonthlyIncome) %>%
+  group_by(MaritalStatus) %>%
+  summarize(avg_salary = mean(MonthlyIncome))
+marital
+
+ggplot(gender, aes(x = Department, fill = Gender)) +
+  geom_bar(position="stack", stat="count") +
+  coord_flip()
+
+ggplot(role, aes(x = JobRole, fill = Gender)) +
+  geom_bar(position="stack", stat="count") +
+  coord_flip()
+```
+
+Comment: generally doing pretty well in terms of diversity & inclusion
+Suggestion: overall ok, but can higher more female in certain departments & roles.
+
+## For Employees
+
+## For Job Seekers
+
 ### Questions
 
-* How much would be appropriate for us to branch out from the guiding questions?
-  + Since branching out will lead to less focus on the proposed questions.
-* How should we define "employee churn"?
-  + Churn: The churn rate is usually calculated as the percentage of employees leaving the company over some specified time period.
-   - Do we get to define this "period"?
-   - Should we just look which role tend to have shorter **YearsAtCurrentRole**?
-   
+* What does *HourlyRate* mean?
+* What does *Attrition* mean?
+* Make sure that understand each variable.
+
+### Notes
    
 Do some background info, IBM/working conditions, shows understanding
 Come up with new questions
@@ -50,14 +178,8 @@ Don't just do stats presentations
 
 Questions should be business-related
 
-about 10min presentation
-
 basically we can ask anything that might be helpful to the employer, you would recommend that...
-What should 
 what role would you apply for if you want to have higher wage. 
 Design who do you want to answer the question to.
 
 Far more important to have great visualizations.
-
-Mostly R and Tableau.
-
