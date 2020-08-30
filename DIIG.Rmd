@@ -30,7 +30,102 @@ IBM <- read_csv("data.csv")
 
 What factors contribute to employee satisfaction levels and what can IBM do to improve satisfaction? Do certain roles have greater employee churn? If so, what factors lead to this churn?
 
-#### Look at relationship between JobInvolvement & Salary/Performance Rating
+Aspects that we will be investigating:
+
+* Basic Demographic Info
+* Income Reward & Motivation
+* Employee Churn
+* Job Satisfaction
+* Diversity & Inclusion
+
+## BASIC DEMOGRAPHIC INFO
+
+```{r}
+# Gender Distribution
+G_init <- IBM %>%
+  count(Gender)
+#G_init
+
+G <- data.frame(
+  Gender=c("Famale", "Male"),
+  count=c(588, 882)
+)
+ 
+G$fraction = G$count / sum(G$count)
+G$ymax = cumsum(G$fraction)
+G$ymin = c(0, head(G$ymax, n=-1))
+ 
+ggplot(G, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=Gender)) +
+     geom_rect() +
+     coord_polar(theta="y") +
+     xlim(c(2, 4))
+
+# Age Distribution
+A_init <- IBM %>%
+  mutate(age = case_when(
+    Age < 30 ~ "Young (<30)",
+    Age >= 30 & Age < 55 ~ "Middle Age (30-55)",
+    Age >= 55 & Age < 65 ~ "Senior (55+)",
+  ))%>%
+  count(age)
+#A_init
+
+A <- data.frame(
+  Age=c("Young (<30)", "Middle Age (30-55)", "Senior (55+)"),
+  count=c(326, 1075, 69)
+)
+
+A$fraction = A$count / sum(A$count)
+A$ymax = cumsum(A$fraction)
+A$ymin = c(0, head(A$ymax, n=-1))
+ 
+ggplot(A, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=Age)) +
+     geom_rect() +
+     coord_polar(theta="y") +
+     xlim(c(2, 4))
+
+# Travel Distribution
+T_init <- IBM %>%
+  count(BusinessTravel)
+#T_init
+
+Tr <- data.frame(
+  Travel=c("None", "Rarely", "Frequently"),
+  count=c(150, 1043, 277)
+)
+
+Tr$fraction = Tr$count / sum(Tr$count)
+Tr$ymax = cumsum(Tr$fraction)
+Tr$ymin = c(0, head(Tr$ymax, n=-1))
+ 
+ggplot(Tr, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=Travel)) +
+     geom_rect() +
+     coord_polar(theta="y") +
+     xlim(c(2, 4))
+
+# Education Field
+Ed_init <- IBM %>%
+  count(EducationField)
+#Ed_init
+
+Ed <- data.frame(
+  Education=c("Human Resources", "Life Sciences", "Marketing", "Medical", "Technical Degree", "Other"),
+  count=c(27, 606, 159, 464, 132, 82)
+)
+
+Ed$fraction = Ed$count / sum(Ed$count)
+Ed$ymax = cumsum(Ed$fraction)
+Ed$ymin = c(0, head(Ed$ymax, n=-1))
+ 
+ggplot(Ed, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=Education)) +
+  geom_rect() +
+  coord_polar(theta="y") +
+  xlim(c(2, 4))
+```
+
+## INCOME REWARD & MOTIVATION
+
+**Job Involvement vs. Monthly Income**
 
 ```{r}
 involvement <- IBM %>%
@@ -51,18 +146,10 @@ ggplot(involvement, aes(x = Involvement, y = avg_income, fill = Involvement)) +
   coord_flip()
 ```
 
-JobInvolvement & Salary: if people who are involved the most fairly rewarded?
-Not very differentiated -- maybe can improve evaluation in terms of job involvement and reward those who have higher levels of involvement. Maybe can design monthly/seasonally evaluations to reward those with higher job involvement, so that employees can be more motivated.
+Job Involvement & Income: are people who are involved the most fairly rewarded?
+Not very differentiated -- maybe can improve evaluation in terms of job involvement and reward those who have higher levels of involvement. Maybe can design monthly/seasonally evaluations&competitions to reward those with higher job involvement, so that employees can be more motivated.
 
-**See if Job Involvement necessarily mean higher working hours**
-
-So that we can determine if we should reward longer working hours or
-
-```{r}
-
-```
-
-**YearsAtCompany vs. MonthlyIncome**
+**Years At Company vs. Monthly Income**
 
 For those who have been working for a long time, if their income is not higher, then might need to think about what is causing this problem -- is it that employees are having a hard time getting promotion (structure change)? Or is it that they don't have a lot motivation (innovation approaches)? 
 
@@ -71,38 +158,24 @@ It would be better if employees know that if they work harder and stay at the fi
 ```{r}
 ggplot(IBM, aes(x = YearsAtCompany, y = MonthlyIncome, color = Age)) + 
   geom_point() +
-  geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE) +
+  geom_smooth(method=lm , color="red", fill="#69b3a2", se=FALSE) +
   scale_color_gradient(low="turquoise1", high="turquoise4")
-  #theme_ipsum()
+
+ggplot(IBM, aes(x = TotalWorkingYears, y = MonthlyIncome, color = Age)) + 
+  geom_point() +
+  geom_smooth(method=lm , color="red", fill="#69b3a2", se=FALSE) +
+  scale_color_gradient(low="turquoise1", high="turquoise4")
 ```
 
-#### YearsInCurrentRole
+Generally people who work longer at IBM receive higher income. However, there's also a significant amount of people that earn a lot even with a short amount of working experience at the company. But this is understandable considering that these people might be experienced before (as shown by the secon graph). 
 
-See if employees are flexible between roles
-If not, then might increase flexibility
-If flexible, then maybe think about limiting role switch if want employees to gain expertise in one certain area.
-This might answer the question of "How do you help people learn new things?"
+## EMPLOYEE CHURN
 
-```{r}
-YearsAtRole <-IBM %>%
-  select(JobRole, YearsInCurrentRole) %>%
-  group_by(JobRole) %>% 
-  summarize(AvgYearsAtRole = mean(YearsInCurrentRole))
+**Education level vs. Years At Company**
 
-ggplot(YearsAtRole, aes(x = JobRole, y = AvgYearsAtRole, fill = JobRole)) + 
-  geom_bar(stat = "identity") +
-  scale_fill_hue(c = 60) +
-  theme(legend.position="none") +
-  coord_flip()
-```
+This might have implications on how is IBm doing in terms of preserving those who have higher education, preventing them from going to other companies -- they might lead fo significant contributions if they can stay at the company longer.
 
-#### Let's start with some basic demographic info
-
-```{r}
-
-```
-
-#### Relationship Between Length at IBM & Work-life Balance
+From the graph we can see that most people, no matter what degree they have, stay around 5 years at IBM. However, IBM may want to increase this number a little longer because it usually takes quite a long time to train someone (especially for roles that require a better understanding of the firm) before they can start providing 100% contribution to the company. However, if most people leave work in 5 years, the value of those years of training might not be cost-efficient.
 
 ```{r}
 yearsVedu <- IBM %>%
@@ -118,11 +191,17 @@ yearsVedu <- IBM %>%
 ggplot(data=yearsVedu, aes(x=YearsAtCompany, group=College, fill=College)) +
   geom_density(adjust=1.5, alpha=.4)
 
-ggplot(data=IBM, aes(x=YearsAtCompany, group=Gender, fill=Gender)) +
+ggplot(data=IBM, aes(x=YearsAtCompany, group=JobRole, fill=JobRole)) +
   geom_density(adjust=1.5, alpha=.4)
 ```
 
-#### Emloyee Churn
+**Employee Churn**
+
+We can see that more senior roles have less employee churn. 
+
+Factors that might be leading to higher churn (both looking at p-value nd estimated coefficient):
+* Monthly Income
+* Years since last promotion
 
 ```{r}
 churn <- IBM %>%
@@ -134,6 +213,49 @@ ggplot(churn, aes(x = JobRole, y = AverageWorkYear, fill = JobRole)) +
   scale_fill_hue(c = 40) +
   theme(legend.position="none") +
   coord_flip()
+
+Sales <- IBM %>%
+  filter(JobRole == "Sales Representative")
+
+ResearchSci <- IBM %>%
+  filter(JobRole == "Research Scientist")
+
+churn_model <- lm(YearsAtCompany ~ as.factor(BusinessTravel) + DistanceFromHome + as.factor(EnvironmentSatisfaction) + as.factor(JobSatisfaction) + YearsSinceLastPromotion + MonthlyIncome, data = IBM)
+
+model_sales <- lm(YearsAtCompany ~ as.factor(BusinessTravel) + DistanceFromHome + as.factor(EnvironmentSatisfaction) + as.factor(JobSatisfaction) + YearsSinceLastPromotion + MonthlyIncome, data = Sales)
+
+model_ResearchSci <- lm(YearsAtCompany ~ as.factor(BusinessTravel) + DistanceFromHome + as.factor(EnvironmentSatisfaction) + as.factor(JobSatisfaction) + YearsSinceLastPromotion + MonthlyIncome, data = ResearchSci)
+
+tidy(churn_model)
+tidy(model_sales)
+tidy(model_ResearchSci)
+
+ggplot(Sales, aes(x = YearsSinceLastPromotion, y = YearsAtCompany)) + 
+  geom_point()
+
+ggplot(Sales, aes(x = MonthlyIncome, y = YearsAtCompany)) + 
+  geom_point()
+
+ggplot(ResearchSci, aes(x = YearsSinceLastPromotion, y = YearsAtCompany)) + 
+  geom_point()
+```
+
+## JOB SATISFACTION
+
+**Relationship Between Length at IBM & Work-life Balance**
+
+```{r}
+B <- IBM %>%
+  select(WorkLifeBalance, YearsAtCompany, Gender) %>%
+  mutate(Balance = case_when(
+    WorkLifeBalance == 1 ~ "Bad",
+    WorkLifeBalance == 2 ~ "Good",
+    WorkLifeBalance == 3 ~ "Better",
+    WorkLifeBalance == 4 ~ "Best",
+  ))
+
+ggplot(B, aes(x = Balance, y = YearsAtCompany, color = Gender)) + 
+  geom_point()
 ```
 
 #### Satisfaction
@@ -148,16 +270,21 @@ satisfaction <- IBM %>%
     JobSatisfaction == 3 ~ "High",
     JobSatisfaction == 4 ~ "Very High"
   ))
+satisfaction
 
+# satisfaction across roles
 ggplot(satisfaction, aes(x = JobRole, fill = Satisfaction)) +
   geom_bar(position="fill", stat="count") +
   scale_fill_hue(c = 60) +
   coord_flip()
+
+model_satisfaction <- lm(JobSatisfaction ~ as.factor(BusinessTravel) + DistanceFromHome  + YearsSinceLastPromotion + MonthlyIncome, data = IBM)
+tidy(model_satisfaction)
 ```
 
-Suggestion: mostly high job satisfaction in all roles -- 
+Suggestion: mostly high job satisfaction in all roles. None of the known factors is correlated.
 
-#### Diversity & Inclusion
+## DIVERSITY & INCLUSION
 
 ```{r}
 gender <- IBM %>%
@@ -187,23 +314,22 @@ ggplot(role, aes(x = JobRole, fill = Gender)) +
   geom_bar(position="stack", stat="count") +
   scale_fill_hue(c = 60) +
   coord_flip()
+
+ggplot(data=IBM, aes(x=YearsAtCompany, group=Gender, fill=Gender)) +
+  geom_density(adjust=1.5, alpha=.4)
 ```
 
 Comment: generally doing pretty well in terms of diversity & inclusion
 Suggestion: overall ok, but can higher more female in certain departments & roles.
+Noticed that there are only two categories. Maybe can expand the umbrella.
 
 ### Questions
 
-*HourlyRate*: hourly compensation
 *Attrition*: leave voluntarily
-* Make sure that understand each variable.
-divide the variables to get new variables
 
 These data are from the HR, so "performance rating" should be HR's rating on the employees. 
 Client facing team
 how much value can you generate from the data
-be creative
-graphs/tables
 
 ### Notes
    
