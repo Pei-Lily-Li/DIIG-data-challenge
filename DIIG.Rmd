@@ -17,10 +17,12 @@ library(tidyverse)
 library(knitr)
 library(broom)
 library(ggplot2)
-library(hrbrthemes)
 library(dplyr)
 library(tidyr)
-library(viridis)
+
+library(ggridges)
+library(forcats)
+
 IBM <- read_csv("data.csv")
 ```
 
@@ -28,34 +30,76 @@ IBM <- read_csv("data.csv")
 
 What factors contribute to employee satisfaction levels and what can IBM do to improve satisfaction? Do certain roles have greater employee churn? If so, what factors lead to this churn?
 
-#### Look at relationship between total working years and years at company and their subtraction
-
 #### Look at relationship between JobInvolvement & Salary/Performance Rating
 
-JobInvolvement & Salary: if people who are involved the most fairly rewarded?
+```{r}
+involvement <- IBM %>%
+  select(JobInvolvement, MonthlyIncome) %>%
+  mutate(Involvement = case_when(
+    JobInvolvement == 1 ~ "Low",
+    JobInvolvement == 2 ~ "Medium",
+    JobInvolvement == 3 ~ "High",
+    JobInvolvement == 4 ~ "Very High",
+  )) %>%
+  group_by(Involvement) %>% 
+  summarize(avg_income = mean(MonthlyIncome))
 
-#### YearsAtCurrentRole vs. TotalYearsAtCompany
+ggplot(involvement, aes(x = Involvement, y = avg_income, fill = Involvement)) + 
+  geom_bar(stat = "identity") +
+  scale_fill_hue(c = 60) +
+  theme(legend.position="none") +
+  coord_flip()
+```
+
+JobInvolvement & Salary: if people who are involved the most fairly rewarded?
+Not very differentiated -- maybe can improve evaluation in terms of job involvement and reward those who have higher levels of involvement. Maybe can design monthly/seasonally evaluations to reward those with higher job involvement, so that employees can be more motivated.
+
+**See if Job Involvement necessarily mean higher working hours**
+
+So that we can determine if we should reward longer working hours or
+
+```{r}
+
+```
+
+**YearsAtCompany vs. MonthlyIncome**
+
+For those who have been working for a long time, if their income is not higher, then might need to think about what is causing this problem -- is it that employees are having a hard time getting promotion (structure change)? Or is it that they don't have a lot motivation (innovation approaches)? 
+
+It would be better if employees know that if they work harder and stay at the firm longer, then they will be properly rewarded.
+
+```{r}
+ggplot(IBM, aes(x = YearsAtCompany, y = MonthlyIncome, color = Age)) + 
+  geom_point() +
+  geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE) +
+  scale_color_gradient(low="turquoise1", high="turquoise4")
+  #theme_ipsum()
+```
+
+#### YearsInCurrentRole
 
 See if employees are flexible between roles
 If not, then might increase flexibility
 If flexible, then maybe think about limiting role switch if want employees to gain expertise in one certain area.
 This might answer the question of "How do you help people learn new things?"
 
-#### Word Cloud
-
 ```{r}
-library(wordcloud2)
-wordcloud <- IBM %>%
-  select(JobRole) %>%
-  count(JobRole)
+YearsAtRole <-IBM %>%
+  select(JobRole, YearsInCurrentRole) %>%
+  group_by(JobRole) %>% 
+  summarize(AvgYearsAtRole = mean(YearsInCurrentRole))
 
-graph <- letterCloud(wordcloud, word = "IBM", color="black", backgroundColor="pink")
-graph
+ggplot(YearsAtRole, aes(x = JobRole, y = AvgYearsAtRole, fill = JobRole)) + 
+  geom_bar(stat = "identity") +
+  scale_fill_hue(c = 60) +
+  theme(legend.position="none") +
+  coord_flip()
 ```
 
 #### Let's start with some basic demographic info
 
 ```{r}
+
 ```
 
 #### Relationship Between Length at IBM & Work-life Balance
@@ -67,17 +111,15 @@ yearsVedu <- IBM %>%
     Education == 2 ~ "College",
     Education == 3 ~ "Bachelor",
     Education == 4 ~ "Master",
-    Education == 4 ~ "Doctor"
+    Education == 5 ~ "Doctor"
   ), !is.na(Education)) %>%
   select(College, YearsAtCompany)
 
 ggplot(data=yearsVedu, aes(x=YearsAtCompany, group=College, fill=College)) +
-  geom_density(adjust=1.5, alpha=.4) +
-  theme_ipsum()
+  geom_density(adjust=1.5, alpha=.4)
 
 ggplot(data=IBM, aes(x=YearsAtCompany, group=Gender, fill=Gender)) +
-  geom_density(adjust=1.5, alpha=.4) +
-  theme_ipsum()
+  geom_density(adjust=1.5, alpha=.4)
 ```
 
 #### Emloyee Churn
@@ -86,7 +128,6 @@ ggplot(data=IBM, aes(x=YearsAtCompany, group=Gender, fill=Gender)) +
 churn <- IBM %>%
   group_by(JobRole) %>% 
   summarize(AverageWorkYear = mean(YearsAtCompany))
-churn
 
 ggplot(churn, aes(x = JobRole, y = AverageWorkYear, fill = JobRole)) + 
   geom_bar(stat = "identity") +
@@ -108,9 +149,9 @@ satisfaction <- IBM %>%
     JobSatisfaction == 4 ~ "Very High"
   ))
 
-# Question: how to order this?
 ggplot(satisfaction, aes(x = JobRole, fill = Satisfaction)) +
   geom_bar(position="fill", stat="count") +
+  scale_fill_hue(c = 60) +
   coord_flip()
 ```
 
@@ -139,31 +180,39 @@ marital
 
 ggplot(gender, aes(x = Department, fill = Gender)) +
   geom_bar(position="stack", stat="count") +
+  scale_fill_hue(c = 60) +
   coord_flip()
 
 ggplot(role, aes(x = JobRole, fill = Gender)) +
   geom_bar(position="stack", stat="count") +
+  scale_fill_hue(c = 60) +
   coord_flip()
 ```
 
 Comment: generally doing pretty well in terms of diversity & inclusion
 Suggestion: overall ok, but can higher more female in certain departments & roles.
 
-## For Employees
-
-## For Job Seekers
-
 ### Questions
 
-* What does *HourlyRate* mean?
-* What does *Attrition* mean?
+*HourlyRate*: hourly compensation
+*Attrition*: leave voluntarily
 * Make sure that understand each variable.
+divide the variables to get new variables
+
+These data are from the HR, so "performance rating" should be HR's rating on the employees. 
+Client facing team
+how much value can you generate from the data
+be creative
+graphs/tables
 
 ### Notes
    
 Do some background info, IBM/working conditions, shows understanding
 Come up with new questions
 As a client, what do you think IMB would be interested in knowing
+From the HR perspective
+
+Do we need a lot of explanations in the output 
 
 
 Formatting question:
