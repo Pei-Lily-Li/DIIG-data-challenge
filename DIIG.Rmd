@@ -1,7 +1,9 @@
 ---
 title: "DIIG Data Challenge"
 author: "Lily Li"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include = FALSE}
@@ -166,16 +168,9 @@ ggplot(IBM, aes(x = TotalWorkingYears, y = MonthlyIncome, color = Age)) +
   geom_smooth(method=lm , color="red", fill="#69b3a2", se=FALSE) +
   scale_color_gradient(low="turquoise1", high="turquoise4")
 ```
-
-Generally people who work longer at IBM receive higher income. However, there's also a significant amount of people that earn a lot even with a short amount of working experience at the company. But this is understandable considering that these people might be experienced before (as shown by the secon graph). 
-
 ## EMPLOYEE CHURN
 
 **Education level vs. Years At Company**
-
-This might have implications on how is IBm doing in terms of preserving those who have higher education, preventing them from going to other companies -- they might lead fo significant contributions if they can stay at the company longer.
-
-From the graph we can see that most people, no matter what degree they have, stay around 5 years at IBM. However, IBM may want to increase this number a little longer because it usually takes quite a long time to train someone (especially for roles that require a better understanding of the firm) before they can start providing 100% contribution to the company. However, if most people leave work in 5 years, the value of those years of training might not be cost-efficient.
 
 ```{r}
 yearsVedu <- IBM %>%
@@ -187,9 +182,6 @@ yearsVedu <- IBM %>%
     Education == 5 ~ "Doctor"
   ), !is.na(Education)) %>%
   select(College, YearsAtCompany)
-
-ggplot(data=yearsVedu, aes(x=YearsAtCompany, group=College, fill=College)) +
-  geom_density(adjust=1.5, alpha=.4)
 
 ggplot(data=IBM, aes(x=YearsAtCompany, group=JobRole, fill=JobRole)) +
   geom_density(adjust=1.5, alpha=.4)
@@ -217,26 +209,17 @@ ggplot(churn, aes(x = JobRole, y = AverageWorkYear, fill = JobRole)) +
 Sales <- IBM %>%
   filter(JobRole == "Sales Representative")
 
-ResearchSci <- IBM %>%
-  filter(JobRole == "Research Scientist")
-
 churn_model <- lm(YearsAtCompany ~ as.factor(BusinessTravel) + DistanceFromHome + as.factor(EnvironmentSatisfaction) + as.factor(JobSatisfaction) + YearsSinceLastPromotion + MonthlyIncome, data = IBM)
 
 model_sales <- lm(YearsAtCompany ~ as.factor(BusinessTravel) + DistanceFromHome + as.factor(EnvironmentSatisfaction) + as.factor(JobSatisfaction) + YearsSinceLastPromotion + MonthlyIncome, data = Sales)
 
-model_ResearchSci <- lm(YearsAtCompany ~ as.factor(BusinessTravel) + DistanceFromHome + as.factor(EnvironmentSatisfaction) + as.factor(JobSatisfaction) + YearsSinceLastPromotion + MonthlyIncome, data = ResearchSci)
-
 tidy(churn_model)
 tidy(model_sales)
-tidy(model_ResearchSci)
 
 ggplot(Sales, aes(x = YearsSinceLastPromotion, y = YearsAtCompany)) + 
   geom_point()
 
 ggplot(Sales, aes(x = MonthlyIncome, y = YearsAtCompany)) + 
-  geom_point()
-
-ggplot(ResearchSci, aes(x = YearsSinceLastPromotion, y = YearsAtCompany)) + 
   geom_point()
 ```
 
@@ -246,16 +229,32 @@ ggplot(ResearchSci, aes(x = YearsSinceLastPromotion, y = YearsAtCompany)) +
 
 ```{r}
 B <- IBM %>%
-  select(WorkLifeBalance, YearsAtCompany, Gender) %>%
+  select(WorkLifeBalance, YearsAtCompany, Gender, JobRole) %>%
   mutate(Balance = case_when(
     WorkLifeBalance == 1 ~ "Bad",
     WorkLifeBalance == 2 ~ "Good",
     WorkLifeBalance == 3 ~ "Better",
     WorkLifeBalance == 4 ~ "Best",
-  ))
+  )) %>%
+  count(Balance, Gender)
+B
 
-ggplot(B, aes(x = Balance, y = YearsAtCompany, color = Gender)) + 
-  geom_point()
+ggplot(B, aes(x = Balance, y = n, fill = Gender)) + 
+  geom_bar(stat = "identity") +
+  scale_fill_hue(c = 60) +
+  theme(legend.position="none") +
+  coord_flip()
+
+B1 <- IBM %>%
+  select(WorkLifeBalance, YearsAtCompany, Gender, JobRole) %>%
+  group_by(JobRole) %>% 
+  summarize(avg_balance = mean(WorkLifeBalance))
+
+ggplot(B1, aes(x = JobRole, y = avg_balance, fill = JobRole)) + 
+  geom_bar(stat = "identity") +
+  scale_fill_hue(c = 60) +
+  theme(legend.position="none") +
+  coord_flip()
 ```
 
 #### Satisfaction
@@ -287,9 +286,6 @@ Suggestion: mostly high job satisfaction in all roles. None of the known factors
 ## DIVERSITY & INCLUSION
 
 ```{r}
-gender <- IBM %>%
-  select(Department, Gender)
-
 role <- IBM %>%
   select(JobRole, Gender)
 
@@ -297,18 +293,6 @@ salary <- IBM %>%
   select(Gender, MonthlyIncome) %>%
   group_by(Gender) %>%
   summarize(avg_salary = mean(MonthlyIncome))
-salary
-
-marital <- IBM %>%
-  select(MaritalStatus, MonthlyIncome) %>%
-  group_by(MaritalStatus) %>%
-  summarize(avg_salary = mean(MonthlyIncome))
-marital
-
-ggplot(gender, aes(x = Department, fill = Gender)) +
-  geom_bar(position="stack", stat="count") +
-  scale_fill_hue(c = 60) +
-  coord_flip()
 
 ggplot(role, aes(x = JobRole, fill = Gender)) +
   geom_bar(position="stack", stat="count") +
@@ -317,44 +301,34 @@ ggplot(role, aes(x = JobRole, fill = Gender)) +
 
 ggplot(data=IBM, aes(x=YearsAtCompany, group=Gender, fill=Gender)) +
   geom_density(adjust=1.5, alpha=.4)
+
+# Age
+X <- IBM %>%
+  select(WorkLifeBalance, Age) %>%
+  mutate(Balance = case_when(
+    WorkLifeBalance == 1 ~ "Bad",
+    WorkLifeBalance == 2 ~ "Good",
+    WorkLifeBalance == 3 ~ "Better",
+    WorkLifeBalance == 4 ~ "Best",
+  )) %>%
+  mutate(AgeFactored = case_when(
+    Age < 30 ~ "Young (<30)",
+    Age >= 30 & Age < 55 ~ "Middle Age (30-55)",
+    Age >= 55 & Age < 65 ~ "Senior (55+)",
+  )) %>%
+  count(Balance, AgeFactored)
+X
+
+ggplot(X, aes(x = Balance, y = n, fill = AgeFactored)) + 
+  geom_bar(stat = "identity") +
+  scale_fill_hue(c = 60) +
+  theme(legend.position="none") +
+  coord_flip()
+
+ggplot(X, aes(fill = AgeFactored, y = n, x = Balance)) + 
+    geom_bar(position="fill", stat="identity")
 ```
 
 Comment: generally doing pretty well in terms of diversity & inclusion
 Suggestion: overall ok, but can higher more female in certain departments & roles.
 Noticed that there are only two categories. Maybe can expand the umbrella.
-
-### Questions
-
-*Attrition*: leave voluntarily
-
-These data are from the HR, so "performance rating" should be HR's rating on the employees. 
-Client facing team
-how much value can you generate from the data
-
-### Notes
-   
-Do some background info, IBM/working conditions, shows understanding
-Come up with new questions
-As a client, what do you think IMB would be interested in knowing
-From the HR perspective
-
-Do we need a lot of explanations in the output 
-
-
-Formatting question:
-would you suggest we knit it into a pdf or a webpage? When we submit the rmd file can it be a pdf so it's easier to look at?
-
-You want to push yourself, explore
-
-treat the presentation like you are presenting to business people
-Should explain R^2 we should explain it in the context
-Ability to give actionable suggestions
-Don't just do stats presentations
-
-Questions should be business-related
-
-basically we can ask anything that might be helpful to the employer, you would recommend that...
-what role would you apply for if you want to have higher wage. 
-Design who do you want to answer the question to.
-
-Far more important to have great visualizations.
